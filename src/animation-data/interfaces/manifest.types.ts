@@ -3,6 +3,7 @@ import { StatisticsDataFileInfo } from './statistics.types';
 
 
 export interface ReplicationManifestMetadata {
+  statisticsDataFiles: any;
   formatVersion: string;
   simulationId: string;
   replication: number;

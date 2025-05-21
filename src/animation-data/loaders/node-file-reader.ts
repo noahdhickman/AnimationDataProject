@@ -1,33 +1,25 @@
-import * as fs from 'fs';
 import * as fsPromises from 'fs/promises';
-import * as path from 'path';
+import * as nodePath from 'path';
 import { FileReader, FileListItem } from './FileReader.interface';
 
-/**
- * Implementation of FileReader using Node.js filesystem
- */
 export class NodeFileReader implements FileReader {
-  private studyRootAbsPath: string;
+  private basePath: string;
 
-  constructor(studyRootAbsPath: string) {
-    this.studyRootAbsPath = path.resolve(studyRootAbsPath);
-
-    if (!fs.existsSync(this.studyRootAbsPath)) {
-      throw new Error(`Study root path does not exist: ${this.studyRootAbsPath}`);
-    }
+  constructor(basePath: string) {
+    this.basePath = basePath;
   }
 
   resolveFullPath(relativePath: string): string {
-    const cleanPath = relativePath.replace(/^\.\//, '');
-    return path.join(this.studyRootAbsPath, cleanPath);
+    return nodePath.resolve(this.basePath, relativePath.replace(/\\/g, '/'));
   }
 
   async readFileAsText(relativePath: string): Promise<string | undefined> {
     const fullPath = this.resolveFullPath(relativePath);
     try {
-      return await fsPromises.readFile(fullPath, 'utf-8');
-    } catch (err: any) {
-      console.error(`Error reading file ${fullPath}: ${err.message}`);
+      const fileContent = await fsPromises.readFile(fullPath, 'utf-8');
+      return fileContent;
+    } catch (error: any) {
+      console.error(`Error reading file ${fullPath}: ${error.message}`);
       return undefined;
     }
   }
@@ -38,11 +30,11 @@ export class NodeFileReader implements FileReader {
       const items = await fsPromises.readdir(fullPath, { withFileTypes: true });
       return items.map((item) => ({
         name: item.name,
-        path: path.join(relativePath, item.name),
+        path: nodePath.join(relativePath, item.name),
         isDirectory: item.isDirectory(),
       }));
-    } catch (err: any) {
-      console.error(`Error listing directory ${fullPath}: ${err.message}`);
+    } catch (error: any) {
+      console.error(`Error listing directory ${fullPath}: ${error.message}`);
       return undefined;
     }
   }
